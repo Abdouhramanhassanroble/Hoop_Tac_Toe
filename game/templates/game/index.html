@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoop Tac Toe</title>
+    <link rel="stylesheet" href="{% static 'game/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏀 Hoop Tac Toe</h1>
+            <p class="subtitle">Trouvez les joueurs qui ont joué pour ces équipes NBA !</p>
+        </header>
+
+        <div class="game-area">
+            <!-- Grille 3x3 -->
+            <div class="grid-container">
+                <div class="grid-header"></div>
+                <div id="col-teams" class="grid-header-row"></div>
+                
+                <div id="row-teams" class="grid-side-col"></div>
+                <div id="grid-cells" class="grid-cells"></div>
+            </div>
+
+            <!-- Zone de recherche de joueur -->
+            <div class="player-search">
+                <h2>Rechercher un joueur</h2>
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="player-search-input" 
+                        placeholder="Tapez le nom d'un joueur..."
+                        autocomplete="off"
+                    >
+                    <div id="autocomplete-results" class="autocomplete-results"></div>
+                </div>
+                <div id="selected-player" class="selected-player"></div>
+            </div>
+
+            <!-- Messages -->
+            <div id="message" class="message"></div>
+        </div>
+    </div>
+
+    <script src="{% static 'game/script.js' %}"></script>
+</body>
+</html>
+

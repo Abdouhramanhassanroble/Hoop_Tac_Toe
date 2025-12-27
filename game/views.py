@@ -1,8 +1,14 @@
 from django.http import JsonResponse
+from django.shortcuts import render
 from datetime import date
 from .models import DailyGrid
 from .utils import validate_player_combination
 from nba_api.stats.static import players
+
+
+def index(request):
+    """Vue principale pour afficher l'interface du jeu."""
+    return render(request, 'game/index.html')
 
 
 def get_grid(request):
