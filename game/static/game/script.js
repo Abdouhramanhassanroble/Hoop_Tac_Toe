@@ -7,6 +7,7 @@ let filledCells = new Set(); // Suivre les cases déjà remplies
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM chargé, initialisation...');
     loadGrid();
     setupEventListeners();
     // Mettre le focus sur l'input de recherche au chargement
@@ -111,26 +112,36 @@ function setupEventListeners() {
     });
     
     // Gérer la touche Entrée
-    searchInput.addEventListener('keydown', function(e) {
+    searchInput.addEventListener('keydown', async function(e) {
+        console.log('Touche pressée:', e.key);
         if (e.key === 'Enter') {
+            console.log('Entrée détectée!');
             e.preventDefault();
+            const query = this.value.trim();
+            console.log('Requête:', query);
+            
+            if (!query) {
+                console.log('Requête vide');
+                showMessage('Veuillez entrer un nom de joueur', 'error');
+                return;
+            }
+            
             if (selectedPlayer) {
-                fillNextAvailableCell();
+                console.log('Joueur déjà sélectionné, recherche case valide...');
+                // Si un joueur est déjà sélectionné, chercher une case valide
+                await findAndFillValidCell();
+            } else if (query.length >= 2) {
+                console.log('Recherche du joueur...');
+                // Si on a tapé un nom mais pas sélectionné, chercher le joueur d'abord
+                await searchAndValidatePlayer(query);
             } else {
-                // Si un résultat d'autocomplete est visible, sélectionner le premier
-                const firstResult = document.querySelector('.autocomplete-item');
-                if (firstResult) {
-                    firstResult.click();
-                    // Attendre un peu puis remplir la case
-                    setTimeout(() => {
-                        if (selectedPlayer) {
-                            fillNextAvailableCell();
-                        }
-                    }, 100);
-                }
+                console.log('Requête trop courte');
+                showMessage('Veuillez entrer au moins 2 caractères', 'error');
             }
         }
     });
+    
+    console.log('Event listeners configurés');
     
     // Fermer l'autocomplete si on clique ailleurs
     document.addEventListener('click', function(e) {
@@ -166,7 +177,9 @@ function displayAutocomplete(players) {
         const item = document.createElement('div');
         item.className = 'autocomplete-item';
         item.textContent = player.full_name;
-        item.addEventListener('click', () => selectPlayer(player));
+        item.addEventListener('click', async () => {
+            await selectPlayer(player);
+        });
         resultsContainer.appendChild(item);
     });
     
@@ -180,7 +193,7 @@ function hideAutocomplete() {
 }
 
 // Sélectionner un joueur
-function selectPlayer(player) {
+async function selectPlayer(player) {
     selectedPlayer = player;
     
     const selectedPlayerDiv = document.getElementById('selected-player');
@@ -190,34 +203,103 @@ function selectPlayer(player) {
     hideAutocomplete();
     document.getElementById('player-search-input').value = player.full_name;
     
-    showMessage(`Joueur sélectionné: ${player.full_name}. Appuyez sur Entrée pour valider dans la prochaine case disponible.`, 'info');
+    // Chercher automatiquement une case valide
+    await findAndFillValidCell();
 }
 
-// Trouver et remplir la prochaine case disponible
-function fillNextAvailableCell() {
-    if (!selectedPlayer || !gridData) {
+// Rechercher un joueur par nom et le valider dans une case
+async function searchAndValidatePlayer(query) {
+    console.log('searchAndValidatePlayer appelé avec:', query);
+    try {
+        console.log('Fetch vers /game/autocomplete/?q=' + encodeURIComponent(query));
+        const response = await fetch(`/game/autocomplete/?q=${encodeURIComponent(query)}`);
+        console.log('Réponse reçue:', response.status);
+        const data = await response.json();
+        console.log('Données reçues:', data);
+        
+        if (data.success && data.players.length > 0) {
+            console.log('Joueurs trouvés:', data.players.length);
+            // Prendre le premier résultat qui correspond exactement ou le plus proche
+            const player = data.players.find(p => p.full_name.toLowerCase() === query.toLowerCase()) || data.players[0];
+            selectedPlayer = player;
+            
+            // Mettre à jour l'interface
+            const selectedPlayerDiv = document.getElementById('selected-player');
+            selectedPlayerDiv.innerHTML = `<span class="selected-player-name">Joueur sélectionné: ${player.full_name}</span>`;
+            selectedPlayerDiv.classList.add('show');
+            document.getElementById('player-search-input').value = player.full_name;
+            hideAutocomplete();
+            
+            // Chercher une case valide pour ce joueur
+            await findAndFillValidCell();
+        } else {
+            showMessage('Aucun joueur trouvé avec ce nom', 'error');
+        }
+    } catch (error) {
+        console.error('Erreur lors de la recherche:', error);
+        showMessage('Erreur lors de la recherche du joueur', 'error');
+    }
+}
+
+// Trouver et remplir une case valide pour le joueur sélectionné
+async function findAndFillValidCell() {
+    if (!selectedPlayer) {
+        showMessage('Aucun joueur sélectionné', 'error');
+        return;
+    }
+    
+    if (!gridData) {
+        showMessage('La grille n\'est pas encore chargée', 'error');
         return;
     }
     
     const rowTeams = gridData.row_teams;
     const colTeams = gridData.col_teams;
     
-    // Trouver la première case non remplie (ordre: de gauche à droite, de haut en bas)
+    // Essayer toutes les cases pour trouver une où le joueur est valide
     for (let row = 0; row < rowTeams.length; row++) {
         for (let col = 0; col < colTeams.length; col++) {
             const cellKey = `${row}-${col}`;
             if (!filledCells.has(cellKey)) {
                 const cellElement = document.querySelector(`.grid-cell[data-row-index="${row}"][data-col-index="${col}"]`);
                 if (cellElement) {
-                    handleCellClick(row, col, cellElement);
-                    return;
+                    // Tester si cette case est valide pour ce joueur
+                    const isValid = await checkCellValidity(row, col);
+                    if (isValid) {
+                        // Si valide, remplir la case
+                        await handleCellClick(row, col, cellElement);
+                        return;
+                    }
                 }
             }
         }
     }
     
-    // Si toutes les cases sont remplies
-    showMessage('Toutes les cases sont déjà remplies !', 'info');
+    // Si aucune case valide n'a été trouvée
+    showMessage(`❌ ${selectedPlayer.full_name} ne correspond à aucune case de la grille.`, 'error');
+    // Réinitialiser la sélection
+    selectedPlayer = null;
+    document.getElementById('selected-player').classList.remove('show');
+    document.getElementById('player-search-input').value = '';
+    document.getElementById('player-search-input').focus();
+}
+
+// Vérifier si une case est valide pour le joueur sélectionné
+async function checkCellValidity(rowIndex, colIndex) {
+    if (!selectedPlayer) {
+        return false;
+    }
+    
+    try {
+        const response = await fetch(
+            `/game/check/?player_id=${selectedPlayer.id}&row_index=${rowIndex}&col_index=${colIndex}`
+        );
+        const data = await response.json();
+        return data.success && data.valid;
+    } catch (error) {
+        console.error('Erreur lors de la vérification:', error);
+        return false;
+    }
 }
 
 // Gérer le clic sur une case ou la validation automatique
@@ -247,7 +329,6 @@ async function handleCellClick(rowIndex, colIndex, cellElement) {
                 cellElement.classList.add('valid', 'filled');
                 cellElement.innerHTML = `<div class="grid-cell-content">${selectedPlayer.full_name}</div>`;
                 filledCells.add(cellKey); // Marquer la case comme remplie
-                showMessage(`✅ Correct ! ${selectedPlayer.full_name} a bien joué pour ces deux équipes.`, 'success');
                 
                 // Réinitialiser la sélection
                 selectedPlayer = null;
@@ -257,7 +338,7 @@ async function handleCellClick(rowIndex, colIndex, cellElement) {
             } else {
                 cellElement.classList.add('invalid');
                 cellElement.innerHTML = '<div class="grid-cell-content">❌</div>';
-                showMessage(`❌ Incorrect. ${selectedPlayer.full_name} n'a pas joué pour ces deux équipes.`, 'error');
+                showMessage(`❌ ${selectedPlayer.full_name} ne correspond pas à cette case.`, 'error');
                 
                 // Retirer la classe invalid après 2 secondes
                 setTimeout(() => {
