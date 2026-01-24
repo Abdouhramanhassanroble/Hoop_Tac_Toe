@@ -15,17 +15,39 @@
         </header>
 
         <div class="game-area">
+            <!-- Statistiques -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-value" id="stat-boxes">0</span>
+                    <span class="stat-label">BOXES</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="stat-filled">0</span>
+                    <span class="stat-label">FILLED</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="stat-players">0</span>
+                    <span class="stat-label">PLAYERS</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="stat-percent">0%</span>
+                    <span class="stat-label">COMPLETE</span>
+                </div>
+            </div>
+
             <!-- Zone de recherche de joueur -->
             <div class="player-search">
-                <h2>Rechercher un joueur</h2>
-                <div class="search-box">
-                    <input 
-                        type="text" 
-                        id="player-search-input" 
-                        placeholder="Tapez le nom d'un joueur..."
-                        autocomplete="off"
-                    >
-                    <div id="autocomplete-results" class="autocomplete-results"></div>
+                <div class="search-container">
+                    <div class="search-box">
+                        <input 
+                            type="text" 
+                            id="player-search-input" 
+                            placeholder="Search Player..."
+                            autocomplete="off"
+                        >
+                        <div id="autocomplete-results" class="autocomplete-results"></div>
+                    </div>
+                    <button id="done-button" class="done-button">DONE?</button>
                 </div>
                 <div id="selected-player" class="selected-player"></div>
             </div>

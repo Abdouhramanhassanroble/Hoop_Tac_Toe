@@ -8,12 +8,12 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    padding: 20px;
+    padding: 10px 5px;
     color: #333;
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 600px;
     margin: 0 auto;
 }
 
@@ -37,19 +37,54 @@ header h1 {
 .game-area {
     background: white;
     border-radius: 20px;
-    padding: 30px;
+    padding: 15px 10px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+/* Statistiques */
+.stats-bar {
+    display: flex;
+    justify-content: space-around;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 15px;
+    gap: 8px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #667eea;
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.65rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
 }
 
 /* Grille */
 .grid-container {
     display: grid;
-    grid-template-columns: 150px 1fr;
-    grid-template-rows: 60px 1fr;
-    gap: 10px;
+    grid-template-columns: 70px 1fr;
+    grid-template-rows: 40px 1fr;
+    gap: 6px;
     background: #f8f9fa;
-    padding: 20px;
-    border-radius: 15px;
+    padding: 12px;
+    border-radius: 12px;
+    max-width: 450px;
+    margin: 0 auto;
 }
 
 .grid-header {
@@ -87,32 +122,49 @@ header h1 {
     align-items: center;
     justify-content: center;
     background: white;
-    border-radius: 10px;
-    padding: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 6px;
+    padding: 5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     font-weight: bold;
-    font-size: 0.9rem;
+    font-size: 0.65rem;
     text-align: center;
-    min-height: 60px;
+    min-height: 35px;
 }
 
 .team-logo img {
-    max-width: 50px;
-    max-height: 50px;
+    max-width: 30px;
+    max-height: 30px;
     object-fit: contain;
 }
 
 .grid-cell {
     background: white;
-    border: 3px solid #e0e0e0;
-    border-radius: 10px;
-    min-height: 120px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    min-height: 70px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
+    padding: 8px;
+}
+
+.grid-cell:not(.filled) .grid-cell-content::before {
+    content: "🏀";
+    display: block;
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+    opacity: 0.3;
+}
+
+.grid-cell:not(.filled) .grid-cell-content {
+    font-size: 0.7rem;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .grid-cell:hover {
@@ -139,40 +191,69 @@ header h1 {
     text-align: center;
     font-weight: bold;
     color: #555;
+    font-size: 0.85rem;
 }
 
 .grid-cell.filled .grid-cell-content {
     color: #28a745;
-    font-size: 1.1rem;
+    font-size: 0.9rem;
 }
 
 /* Recherche de joueur */
 .player-search {
-    margin-bottom: 40px;
+    margin-bottom: 15px;
+    max-width: 450px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.player-search h2 {
-    margin-bottom: 15px;
-    color: #333;
-    font-size: 1.5rem;
+.search-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
 .search-box {
     position: relative;
+    flex: 1;
 }
 
 #player-search-input {
     width: 100%;
-    padding: 15px;
-    font-size: 1rem;
+    padding: 8px 12px;
+    font-size: 0.85rem;
     border: 2px solid #e0e0e0;
-    border-radius: 10px;
+    border-radius: 6px;
     outline: none;
     transition: border-color 0.3s;
+    background: white;
 }
 
 #player-search-input:focus {
     border-color: #667eea;
+}
+
+.done-button {
+    padding: 8px 18px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.done-button:hover {
+    background: #5568d3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.done-button:active {
+    transform: translateY(0);
 }
 
 .autocomplete-results {

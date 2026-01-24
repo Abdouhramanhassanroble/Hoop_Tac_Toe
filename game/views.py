@@ -2,8 +2,9 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from datetime import date
 from .models import DailyGrid
-from .utils import validate_player_combination
+from .utils import validate_player_combination, get_all_team_ids, count_total_possible_players
 from nba_api.stats.static import players
+import random
 
 
 def index(request):
@@ -14,23 +15,54 @@ def index(request):
 def get_grid(request):
     """
     Envoie la grille du jour au joueur.
+    Crée automatiquement une grille si elle n'existe pas pour aujourd'hui.
     Retourne la grille (row_teams et col_teams) pour la date du jour.
     """
-    today = date.today()
-    
     try:
-        grid = DailyGrid.objects.get(date=today)
+        today = date.today()
+        
+        # Récupérer ou créer la grille du jour
+        grid, created = DailyGrid.objects.get_or_create(
+            date=today,
+            defaults={
+                'row_teams': [],
+                'col_teams': []
+            }
+        )
+        
+        # Si la grille vient d'être créée ou est vide, générer les équipes
+        if created or not grid.row_teams or not grid.col_teams:
+            all_teams = get_all_team_ids()
+            selected = random.sample(all_teams, 6)
+            grid.row_teams = selected[:3]
+            grid.col_teams = selected[3:]
+            grid.save()
+        
+        # Vérifier que la grille a des données valides
+        if not grid.row_teams or not grid.col_teams:
+            return JsonResponse({
+                'success': False,
+                'error': 'La grille est vide'
+            }, status=500)
+        
+        # Récupérer le nombre total de joueurs possibles (peut être None si pas encore calculé)
+        total_players = grid.total_possible_players
+        
+        # Ne pas calculer ici car c'est trop long - on le fera en arrière-plan ou à la demande
+        # Le calcul peut prendre plusieurs minutes, donc on ne bloque pas la réponse
+        
         return JsonResponse({
             'success': True,
             'date': grid.date.isoformat(),
             'row_teams': grid.row_teams,
-            'col_teams': grid.col_teams
+            'col_teams': grid.col_teams,
+            'total_possible_players': total_players
         })
-    except DailyGrid.DoesNotExist:
+    except Exception as e:
         return JsonResponse({
             'success': False,
-            'error': 'Aucune grille disponible pour aujourd\'hui'
-        }, status=404)
+            'error': f'Erreur lors de la récupération de la grille: {str(e)}'
+        }, status=500)
 
 
 def autocomplete_player(request):
